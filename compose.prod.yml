@@ -1,0 +1,14 @@
+services:
+  app:
+    restart: always
+
+  nginx:
+    restart: always
+    ports:
+      - "${APP_PORT:-80}:80"
+
+  db:
+    restart: always
+
+  redis:
+    restart: always

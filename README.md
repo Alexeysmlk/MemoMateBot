@@ -1,5 +1,7 @@
 # MemoMate
 
+Уютный Telegram-бот на Laravel, который помогает не забывать важные даты: хранит дни рождения и сам вовремя присылает напоминания 🎂
+
 <p align="left">
   <img alt="Laravel" src="https://img.shields.io/badge/Laravel-12-FF2D20?style=flat-square&logo=laravel&logoColor=white">
   <img alt="PHP" src="https://img.shields.io/badge/PHP-8.4-777BB4?style=flat-square&logo=php&logoColor=white">
@@ -8,67 +10,56 @@
   <img alt="Redis" src="https://img.shields.io/badge/Redis-7-DC382D?style=flat-square&logo=redis&logoColor=white">
 </p>
 
-Лаконичное Laravel-окружение в Docker: поднял контейнеры и сразу работаешь.
+## Технологии
 
-## Содержание
-- [Быстрый старт](#быстрый-старт)
-- [Стек](#стек)
-- [Команды](#команды)
-- [Xdebug](#xdebug)
-- [Troubleshooting](#troubleshooting)
+Небольшой и практичный стек для стабильной разработки и запуска ✨
 
-## Быстрый старт
+| Технология | Версия | Для чего используется |
+|---|---|---|
+| Laravel | 12 | Основа приложения и бизнес-логики бота |
+| PHP-FPM | 8.4 | Выполняет PHP-код приложения |
+| Nginx | 1.27 | Принимает HTTP-запросы и проксирует их в приложение |
+| PostgreSQL | 17 | Хранит пользователей, даты и настройки напоминаний |
+| Redis | 7 | Используется для кэша, сессий и очередей |
+| Docker Compose | актуальный | Поднимает весь проект одной командой |
+| Composer | 2 | Устанавливает и обновляет PHP-зависимости |
+
+## Старт
+
+1. Подготовьте окружение:
 
 ```bash
 cp .env.example .env
-docker compose up -d --build
-docker compose exec app composer install
-docker compose exec app php artisan key:generate
-docker compose exec app php artisan migrate
 ```
 
-Приложение: `http://localhost:8080`
-
-## Стек
-
-| Сервис | Версия | Роль |
-|---|---|---|
-| PHP-FPM | 8.4 | Выполнение Laravel |
-| Nginx | 1.27 | HTTP-сервер |
-| PostgreSQL | 17 | База данных |
-| Redis | 7 | Кэш, сессии, очереди |
-| Composer | 2 | Управление PHP-зависимостями |
-| Xdebug | 3 | Отладка кода |
-
-## Команды
+2. Поднимите dev-стек:
 
 ```bash
-# Статус контейнеров
-docker compose ps
-
-# Логи
-docker compose logs -f app nginx db redis
-
-# Artisan
-docker compose exec app php artisan about
-
-# Composer
-docker compose exec app composer require vendor/package
-
-# Остановить контейнеры
-docker compose down
+docker compose -f compose.yml -f compose.dev.yml up -d --build
 ```
 
-## Xdebug
+3. Установите зависимости и инициализируйте приложение:
 
-- Конфиг: `docker/php/conf.d/xdebug.ini`
-- Порт: `9003`
-- Для Linux `host.docker.internal` уже добавлен через `extra_hosts` в `compose.yml`
+```bash
+docker compose -f compose.yml -f compose.dev.yml exec app composer install
+docker compose -f compose.yml -f compose.dev.yml exec app php artisan key:generate
+docker compose -f compose.yml -f compose.dev.yml exec app php artisan migrate
+```
 
-## Troubleshooting
+После запуска приложение доступно по адресу: `http://localhost:8080` 🚀
 
-| Проблема | Что сделать |
-|---|---|
-| `Port is already allocated` | Освободите порт (`8080`, `5432`, `6379`) или измените его в `compose.yml` |
-| Laravel не пишет в `storage` | Выполните: `docker compose exec app chmod -R 775 storage bootstrap/cache` |
-| Xdebug не ловится IDE | Проверьте, что IDE слушает порт `9003` и выбран корректный path mapping |
+Порты по умолчанию (из `.env.example`):
+- App: `FORWARD_APP_PORT=8080`
+- PostgreSQL: `FORWARD_DB_PORT=5432`
+- Redis: `FORWARD_REDIS_PORT=6379`
+
+## Полезные команды
+
+Самые нужные команды на каждый день:
+
+```bash
+make up        # поднять dev-стек
+make ps        # проверить статус
+make logs      # посмотреть логи
+make down      # остановить dev-стек
+```

@@ -35,8 +35,6 @@ services:
     depends_on:
       app:
         condition: service_started
-    ports:
-      - "8080:80"
     volumes:
       - ./:/var/www/html:ro
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
@@ -47,8 +45,6 @@ services:
     image: postgres:17-alpine
     container_name: memomate-db
     restart: unless-stopped
-    ports:
-      - "5432:5432"
     environment:
       POSTGRES_DB: ${DB_DATABASE:-memomate}
       POSTGRES_USER: ${DB_USERNAME:-memomate}
@@ -67,8 +63,6 @@ services:
     image: redis:7-alpine
     container_name: memomate-redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data

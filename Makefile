@@ -1,6 +1,7 @@
-COMPOSE=docker compose -f compose.yml
+COMPOSE=docker compose -f compose.yml -f compose.dev.yml
+COMPOSE_PROD=docker compose -f compose.yml -f compose.prod.yml
 
-.PHONY: up down build rebuild logs ps shell composer artisan
+.PHONY: up down build rebuild logs ps shell composer artisan up-prod down-prod
 
 up:
 	$(COMPOSE) up -d
@@ -28,3 +29,9 @@ composer:
 
 artisan:
 	$(COMPOSE) exec app php artisan $(cmd)
+
+up-prod:
+	$(COMPOSE_PROD) up -d
+
+down-prod:
+	$(COMPOSE_PROD) down
