@@ -16,7 +16,7 @@ rebuild:
 	$(COMPOSE) up -d --build
 
 logs:
-	$(COMPOSE) logs -f app nginx db redis
+	$(COMPOSE) logs -f app worker scheduler db redis
 
 ps:
 	$(COMPOSE) ps

@@ -1,49 +1,54 @@
+x-db-redis-depends: &db_redis_depends
+  db:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+
+x-laravel-service: &laravel_service
+  image: memomate-app:local
+  restart: unless-stopped
+  working_dir: /var/www/html
+  volumes:
+    - ./:/var/www/html
+  extra_hosts:
+    - host.docker.internal:host-gateway
+  depends_on: *db_redis_depends
+  init: true
+  networks:
+    - app_network
+
 services:
   app:
+    <<: *laravel_service
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+      target: base
       args:
         UID: ${UID:-1000}
         GID: ${GID:-1000}
-    image: memomate-app:local
-    container_name: memomate-app
-    restart: unless-stopped
-    working_dir: /var/www/html
-    volumes:
-      - ./:/var/www/html
-    extra_hosts:
-      - host.docker.internal:host-gateway
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+    command: ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
     healthcheck:
-      test: ["CMD", "php", "-v"]
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1:8000/up')===false?1:0);"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
-    networks:
-      - app_network
+      start_period: 20s
 
-  nginx:
-    image: nginx:1.27-alpine
-    container_name: memomate-nginx
-    restart: unless-stopped
-    depends_on:
-      app:
-        condition: service_started
-    volumes:
-      - ./:/var/www/html:ro
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-    networks:
-      - app_network
+  worker:
+    <<: *laravel_service
+    command: ["sh", "-lc", "php artisan queue:work --verbose --tries=${QUEUE_WORK_TRIES:-3} --timeout=${QUEUE_WORK_TIMEOUT:-90}"]
+    stop_signal: SIGTERM
+    stop_grace_period: 60s
+
+  scheduler:
+    <<: *laravel_service
+    command: ["php", "artisan", "schedule:work"]
+    stop_signal: SIGTERM
+    stop_grace_period: 30s
 
   db:
     image: postgres:17-alpine
-    container_name: memomate-db
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${DB_DATABASE:-memomate}
@@ -61,7 +66,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: memomate-redis
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
